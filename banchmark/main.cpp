@@ -8,15 +8,19 @@
 
 
 void Test() {
-    std::ofstream myfile;
-    myfile.open("Statistics.csv", std::ios_base::out);
-    myfile.close();
+    std::ofstream csvfile;
+    csvfile.open("Statistics.csv", std::ios_base::out);
+    csvfile.close();
+    std::ofstream gistfile;
+    gistfile.open("banchPyth\\banchPyth\\forGist.txt", std::ios_base::out);
+    gistfile.close();
     int expCount;
     std::cout << "\n Enter the number of experiments: ";
     std::cin >> expCount;
     runFunc(Sin, expCount, "Sin");
     runFunc(Cos, expCount, "Cos");
-    runFunc(Exp, expCount, "Exp");
+    runFunc(Sh, expCount, "Sh");
+    //runFunc(Exp, expCount, "Exp");
     
 }
 

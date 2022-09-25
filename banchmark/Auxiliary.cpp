@@ -36,6 +36,23 @@ AnswWithActCounter Sin(double angle) {
     return { answ , actCounter };
 }
 
+AnswWithActCounter Sh(double angle) {
+    angle *= 3.1415926535 / 180;
+    long double answ(0), angleToPower(angle);
+    long double prev(2), counter(1);
+    int actCounter(9);
+    long double fact(1);
+    while (answ - prev > 0.001 or answ - prev < -0.001) {
+        prev = answ;
+        answ += (angleToPower) / fact;
+        counter += 2;
+        fact *= counter * (counter - 1);
+        angleToPower *= angle * angle;
+        actCounter += 20;
+    }
+    return { answ , actCounter };
+}
+
 AnswWithActCounter Cos(double angle) {
     angle *= 3.1415926535 / 180;
     long double answ(1), angleToPower(angle);
@@ -65,7 +82,9 @@ void WriteVecToCVS(std::string vecName, std::vector<T>& vec, std::ofstream& myfi
 
 void SaveToCVS(BanchMark& bnchmrk) {
     std::ofstream myfile;
+    std::ofstream gistfile;
     myfile.open("Statistics.csv", std::ios_base::app);
+    gistfile.open("banchPyth\\banchPyth\\forGist.txt", std::ios_base::app);
     myfile << "PModel;" << bnchmrk.pModel << "\n";
     myfile << "Task;" << bnchmrk.task << "\n";
     myfile << "OpType;" << bnchmrk.opType << "\n";
@@ -77,26 +96,32 @@ void SaveToCVS(BanchMark& bnchmrk) {
     myfile << "AvTime;" << bnchmrk.avTime << "\n";
     WriteVecToCVS("AbsError", bnchmrk.absError, myfile);
     WriteVecToCVS("RelError", bnchmrk.relError, myfile);
-    //WriteVecToCVS("TaskPerf", bnchmrk.taskPerf, myfile);
-    myfile << "TaskPerf;" << bnchmrk.taskPerf << "\n";
+    WriteVecToCVS("TaskPerf", bnchmrk.taskPerf, myfile);
+    myfile << "TaskPerfAv;" << bnchmrk.taskPerfAv << "\n";
     myfile << "Variance;" << bnchmrk.variance << "\n";
     myfile << "MeanSquareDeviation;" << bnchmrk.meanSquareDeviation << "\n";
     myfile << "\n";
+
+    gistfile << bnchmrk.task << " " << bnchmrk.taskPerfAv << "\n";
+
     myfile.close();
+    gistfile.close();
 }
 
 void runFunc(AnswWithActCounter(*mathFunc)(double angle), int expCount, std::string opName) {
     
-    double funcTime, totalTime = 0, totalInsCount = 0;
+    /*long */double funcTime, totalTime = 0, totalInsCount = 0;
     BanchMark bnchmrk;
     bnchmrk.time.reserve(expCount);
     bnchmrk.lNum.reserve(expCount);
     bnchmrk.absError.resize(expCount);
     bnchmrk.relError.resize(expCount);
-    //bnchmrk.taskPerf.resize(expCount);
+    bnchmrk.taskPerf.resize(expCount);
     bnchmrk.task = opName;
+    bnchmrk.taskPerfAv = 0;
+    double p = 1.0 / expCount;
     std::chrono::steady_clock::time_point startTimer, stopTimer;
-    for (int i(0); i < expCount; i++) {
+    for (int i(0); i <= expCount; i++) {
         AnswWithActCounter answ;
         startTimer = std::chrono::high_resolution_clock::now();
         if(opName == "Exp")
@@ -104,15 +129,22 @@ void runFunc(AnswWithActCounter(*mathFunc)(double angle), int expCount, std::str
         else
             answ = mathFunc(rand()%180);
         stopTimer = std::chrono::high_resolution_clock::now();
-        funcTime = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTimer - startTimer).count();
-        //bnchmrk.taskPerf[i] = funcTime / answ.counter;
-        bnchmrk.time.push_back(funcTime);
-        bnchmrk.lNum.push_back(i);
-        bnchmrk.insCount.push_back(answ.counter);
-        totalTime += bnchmrk.time[i];
-        totalInsCount += bnchmrk.insCount[i];
+        if (i != 0) {
+            
+            funcTime = /*(long double)*/std::chrono::duration_cast<std::chrono::nanoseconds>(stopTimer - startTimer).count();// / 1000000000;
+            bnchmrk.taskPerf[i-1] = answ.counter / funcTime;
+            bnchmrk.taskPerfAv += p / bnchmrk.taskPerf[i - 1];
+            bnchmrk.time.push_back(funcTime);
+            bnchmrk.lNum.push_back(i-1);
+            bnchmrk.insCount.push_back(answ.counter);
+            totalTime += bnchmrk.time[i-1];
+            totalInsCount += bnchmrk.insCount[i-1];
+        }
+        
+       
     }
-    bnchmrk.taskPerf = totalTime / totalInsCount;
+    //bnchmrk.taskPerfAv = totalInsCount / totalTime;
+    bnchmrk.taskPerfAv = 1 / bnchmrk.taskPerfAv;
     double mathExpect(0), mathExpectPow2(0);
     for (int i(0); i < expCount; i++) {
         mathExpect += bnchmrk.time[i];

@@ -26,16 +26,17 @@ struct BanchMark {
     double avTime;
     std::vector<double>absError;
     std::vector<double>relError;
-    //std::vector<double> taskPerf;   //nanosec
-    double taskPerf;
+    std::vector<double> taskPerf;   //nanosec
+    double taskPerfAv;
     double variance;
     double meanSquareDeviation;
 
 };
-//1 + 1 + 4 * power
+
 AnswWithActCounter Exp(double power);
 
 AnswWithActCounter Sin(double angle);
+AnswWithActCounter Sh(double angle);
 
 AnswWithActCounter Cos(double angle);
 
